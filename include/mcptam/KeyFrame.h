@@ -76,6 +76,9 @@
 #include <atomic>
 #include <boost/circular_buffer.hpp>
 #include <boost/thread/mutex.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/photo/photo.hpp>
 
 class MapPoint;
 class SmallBlurryImage;
@@ -114,6 +117,7 @@ struct Measurement
   //for testing
   CVD::ImageRef irOffset;
   bool bSelected;
+      
 };
 
 /// Contains image data and corner points. Each keyframe is made of LEVELS pyramid levels, stored in struct Level.
@@ -136,6 +140,7 @@ struct Level
   std::vector<int> vCornerRowLUT;          ///< Row-index into the FAST corners, speeds up access
   std::vector<Candidate> vCandidates;      ///< Potential locations of new map points
   std::vector<std::pair<double, CVD::ImageRef> > vScoresAndMaxCorners;  ///< The best scoring points and their scores, used to generate candidates
+ 
   
   //bool bImsphereCornersCached;             ///< Have the FAST corners been projected onto the camera sphere?
   //std::vector<TooN::Vector<3> > vImsphereCorners; ///< Corner points un-projected into r=1 sphere coordinates, used to speed up epipolar search
@@ -236,8 +241,11 @@ public:
   bool NoImage();
   
   void RemoveImage();
+    
+  KeyFrame* CopyKeyFramePartial(MultiKeyFrame* sourceMKF, std::string name); //partially copy keyframe
   
   // Variables
+         
   static double sdDistanceMeanDiffFraction;  ///< fraction of distance between mean scene depth points that is used in overall distance computation
 //  static double saThreshDerivs[LEVELS];  ///< derivatives that determine FAST threshold
   static std::string ssCandidateType; ///< decide scoring type ("fast, "shi")
@@ -271,6 +279,7 @@ public:
   
   bool mbActive;  ///< The tracker uses this to indicate which keyframes have been updated with new measurements, the MapMaker culls inactive keyframes when it receives a new MultiKeyFrame
   
+    
 private:
 
   /// Generate a vector of <depth, weight> pairs from points that this keyframe measures, used in the RefreshSceneDepth functions
@@ -331,7 +340,13 @@ public:
   
   void RemoveImages();
   
+  //partially copy MultiKeyFrame
+  
+  MultiKeyFrame* CopyMultiKeyFramePartial(); //returns a pointer to the partially copied MKF
+  
   // Variables
+  bool isBufferMKF;  ///am I a buffer MKF?  If so, we'll use the flag to disable things such as updating measurements to the global points list when buffering keyframe information
+  
   TooN::SE3<> mse3BaseFromWorld;  ///< The current pose in the world reference frame
   bool mbFixed; ///< Is the pose fixed? Generally only true for the first MultiKeyFrame added to the map
   bool mbBad;  ///< Is it a dud? In that case it'll be moved to the trash soon.
@@ -344,7 +359,7 @@ public:
   KeyFramePtrMap mmpKeyFrames;  ///< %Map of camera names to KeyFrame pointers
   
   double mdTotalDepthMean;  ///< The mean of all owned KeyFrames' mdSceneDepthMean values
-  int mnID;      ///< Used for identifying MultiKeyFrame when writing map to file          
+  int mnID;      ///< Used for identifying MultiKeyFrame when writing map to file       
 };
 
 

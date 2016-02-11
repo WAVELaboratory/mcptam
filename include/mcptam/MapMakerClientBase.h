@@ -137,7 +137,6 @@ public:
    *  This initialization method assumes that the given MultiKeyFrame contains at least two KeyFrames.
    *  @param pMKF_Incoming Pointer to the MultiKeyFrame being used to initialize Map */
   virtual bool Init(MultiKeyFrame*& pMKF_Incoming, bool bPutPlaneAtOrigin) = 0;
-  
   //---------------------------------------- Override me! -----------------------------------------------
   /// Override this to implement signaling a reset. Called by the Tracker.
   virtual void RequestReset() = 0;

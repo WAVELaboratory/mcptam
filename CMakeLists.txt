@@ -9,6 +9,9 @@ set(CMAKE_BUILD_TYPE None)
 # -DNDEBUG flag that disables asserts
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++0x -march=core2 -msse3 -O3 -g -fopenmp")
 
+#Testing options, set to true if you want to build the rostests
+SET(BUILD_TEST TRUE)
+
 # Find various packages in order to set up environment variables
 find_package(catkin REQUIRED COMPONENTS roscpp image_transport sensor_msgs cv_bridge geometry_msgs tf message_filters std_msgs
                                         std_srvs visualization_msgs dynamic_reconfigure pcl_ros message_generation)
@@ -53,7 +56,7 @@ catkin_package(
 add_executable(mcptam src/Main.cc src/GLWindow2.cc src/GLWindowMenu.cc src/VideoSourceMulti.cc src/CameraGroupSubscriber.cc 
                       src/SystemBase.cc src/SystemFrontendBase.cc src/System.cc src/TaylorCamera.cc src/KeyFrame.cc src/MapPoint.cc src/Map.cc 
                       src/SmallBlurryImage.cc src/ShiTomasi.cc src/MapMaker.cc src/MapMakerBase.cc src/MapMakerClientBase.cc src/MapMakerServerBase.cc 
-                      src/PatchFinder.cc src/Relocaliser.cc src/Tracker.cc src/KeyFrameViewer.cc 
+                      src/PatchFinder.cc src/Relocaliser.cc src/Tracker.cc src/EntropyComputation.cc src/KeyFrameViewer.cc 
                       src/BundleAdjusterBase.cc src/MiniPatch.cc src/BundleAdjusterMulti.cc src/ChainBundle.cc)
 add_dependencies(mcptam ${PROJECT_NAME}_gencpp)
 target_link_libraries(mcptam ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${CVD_LIBRARY} ${OPENGL_gl_LIBRARY} ${OpenCV_LIBS} ${GVars3_LIBRARIES}
@@ -63,7 +66,7 @@ add_executable(mcptam_client src/MainClient.cc src/GLWindow2.cc src/GLWindowMenu
                              src/SystemBase.cc src/SystemFrontendBase.cc src/SystemClient.cc src/TaylorCamera.cc src/KeyFrame.cc src/MapPoint.cc src/Map.cc 
                              src/SmallBlurryImage.cc src/ShiTomasi.cc src/MapMakerClient.cc src/MapMakerBase.cc src/MapMakerClientBase.cc 
                              src/NetworkManager.cc src/PatchFinder.cc src/Relocaliser.cc src/MiniPatch.cc 
-                             src/Tracker.cc src/KeyFrameViewer.cc)
+                             src/Tracker.cc src/EntropyComputation.cc src/KeyFrameViewer.cc)
 add_dependencies(mcptam_client ${PROJECT_NAME}_gencpp)
 target_link_libraries(mcptam_client ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${CVD_LIBRARY} ${OPENGL_gl_LIBRARY} ${OpenCV_LIBS} ${GVars3_LIBRARIES}
                                     ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
@@ -87,11 +90,19 @@ add_executable(pose_calibrator src/MainPoseCalibrator.cc src/GLWindow2.cc src/GL
                               src/SystemBase.cc src/PoseCalibrator.cc src/CalibImageTaylor.cc src/CalibCornerPatch.cc src/CalibGridCorner.cc 
                               src/TrackerCalib.cc src/MapMakerCalib.cc src/MapMaker.cc src/MapMakerBase.cc src/MapMakerClientBase.cc src/MapMakerServerBase.cc
                               src/TaylorCamera.cc src/KeyFrame.cc src/MapPoint.cc src/Map.cc src/SmallBlurryImage.cc src/ShiTomasi.cc  
-                              src/PatchFinder.cc src/Relocaliser.cc src/Tracker.cc src/KeyFrameViewer.cc
+                              src/PatchFinder.cc src/Relocaliser.cc src/Tracker.cc src/EntropyComputation.cc src/KeyFrameViewer.cc
                               src/BundleAdjusterBase.cc src/BundleAdjusterSingle.cc src/BundleAdjusterCalib.cc src/ChainBundle.cc src/MiniPatch.cc)
 add_dependencies(pose_calibrator ${PROJECT_NAME}_gencpp)
 target_link_libraries(pose_calibrator ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${CVD_LIBRARY} ${OPENGL_gl_LIBRARY} ${OpenCV_LIBS} ${GVars3_LIBRARIES}
                                      ${G2O_STUFF_LIBRARY} ${G2O_CORE_LIBRARY} ${G2O_SOLVER_CHOLMOD} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+
+if(BUILD_TEST)
+  MESSAGE("adding files for unit testing...")
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_entropy test/entropy_test.test test/entropy_test.cpp)
+  target_link_libraries(test_entropy ${catkin_LIBRARIES})
+endif()
+
                                      
 install(TARGETS mcptam mcptam_client mcptam_server camera_calibrator pose_calibrator
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -108,3 +119,5 @@ install(DIRECTORY masks/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/masks
   PATTERN ".svn" EXCLUDE
 )
+
+
