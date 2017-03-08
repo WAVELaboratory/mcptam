@@ -37,6 +37,7 @@
 //=========================================================================================
 
 #include <mcptam/KeyFrame.h>
+#include <mcptam/GuiCallBacks.h>
 #include <mcptam/ShiTomasi.h>
 #include <mcptam/SmallBlurryImage.h>
 #include <mcptam/MapPoint.h>
@@ -72,6 +73,12 @@ std::string KeyFrame::ssCandidateType = "fast";
 std::string KeyFrame::ssCandidateCriterion = "percent";
 bool KeyFrame::sbAdaptiveThresh = true;
 int Level::snNumPrev = 2;
+
+int level0 = 10;
+int level1 = 15;
+int level2 = 15;
+int level3 = 10;
+int threshold_state = 0;
 
 KeyFrame::KeyFrame(MultiKeyFrame* pMKF, std::string name) : mCamName(name), mpParent(pMKF)
 {
@@ -346,25 +353,65 @@ std::tuple<double, double, double> KeyFrame::MakeKeyFrame_Lite(CVD::Image<CVD::b
           // whose aim is to balance the different levels' relative feature densities.
 
       if (i == 0)
+      {
+          if(threshold_state==1)
           {
-              fast_corner_detect_10(lev.image, lev.vCorners, 10);
-              lev.nFastThresh = 10;
+            fast_corner_detect_10(lev.image, lev.vCorners, level0);
+            lev.nFastThresh = level0;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level0: " << level0);
           }
+          else
+          {
+            fast_corner_detect_10(lev.image, lev.vCorners, 10);
+            lev.nFastThresh = 10;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level0: " << level0);
+          }
+      }
       if (i == 1)
+      {
+          if(threshold_state==1)
           {
-              fast_corner_detect_10(lev.image, lev.vCorners, 15);
-              lev.nFastThresh = 15;
+            fast_corner_detect_10(lev.image, lev.vCorners, level1);
+            lev.nFastThresh = level1;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level1: " << level1);
           }
+          else
+          {
+            fast_corner_detect_10(lev.image, lev.vCorners, 15);
+            lev.nFastThresh = 15;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level1 state not 1: " << level1);
+          }
+      }
       if (i == 2)
+      {
+          if(threshold_state==1)
           {
-              fast_corner_detect_10(lev.image, lev.vCorners, 15);
-              lev.nFastThresh = 15;
+            fast_corner_detect_10(lev.image, lev.vCorners, level2);
+            lev.nFastThresh = level2;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level2: " << level2);
           }
+          else
+          {
+            fast_corner_detect_10(lev.image, lev.vCorners, 15);
+            lev.nFastThresh = 15;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level2: " << level2);
+          }
+      }
       if (i == 3)
+      {
+          if(threshold_state==1)
           {
-              fast_corner_detect_10(lev.image, lev.vCorners, 10);
-              lev.nFastThresh = 10;
+            fast_corner_detect_10(lev.image, lev.vCorners, level3);
+            lev.nFastThresh = level3;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level3: " << level3);
           }
+          else
+          {
+            fast_corner_detect_10(lev.image, lev.vCorners, 10);
+            lev.nFastThresh = 10;
+            //ROS_INFO_STREAM("KeyFrame.cpp Level3: " << level3);
+          }
+      }
 
           //do nonmax suppression
 
