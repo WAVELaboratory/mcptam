@@ -140,7 +140,7 @@ class StreamBuffer
        capacity_ = buffer_.capacity();
    }
 
-   void PrintBuffer()
+   void PrintPairBuffer()
    {
         ROS_INFO("Printing StreamBuffer object...");
         
@@ -155,7 +155,7 @@ class StreamBuffer
         ROS_INFO_STREAM(sbufferContents.str());
    }
 
-   void PrintBuffer(std::size_t bound)
+   void PrintPairBuffer(std::size_t bound)
    {
 
        ROS_INFO_STREAM("Printing first " << bound << " elements of StreamBuffer object...");
@@ -170,7 +170,7 @@ class StreamBuffer
        ROS_INFO_STREAM(sbufferContents.str());
    }
 
-   void PrintQueueBuffer()
+   void PrintPairQueueBuffer()
    {
        std::stringstream sbufferContents;
        sbufferContents << "\n";

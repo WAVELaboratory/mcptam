@@ -501,6 +501,8 @@ void Tracker::TrackFrame(ImageBWMap& imFrames, ros::Time timestamp, bool bDraw)
 
       if(mbUseCper) // use the entropy based keyframe method (CPER)
       {
+        if(mMapMaker.TrackerQueueSize()==0)
+        {
           TooN::Vector<3> trackerEntropy = EvaluateTrackerEntropy(this);
 
           bool addEntropyMKF = false;
@@ -512,11 +514,11 @@ void Tracker::TrackFrame(ImageBWMap& imFrames, ros::Time timestamp, bool bDraw)
             
             MultiKeyFrame* closest_mkf = mMapMaker.ClosestMultiKeyFrame(*mpCurrentMKF);
             double distance_to_closest_mkf = closest_mkf->Distance(*mpCurrentMKF);
-            ROS_DEBUG("distance to closest mkf is: " << distance_to_closest_mkf);
+            ROS_DEBUG_STREAM("distance to closest mkf is: " << distance_to_closest_mkf);
 
-            bool test = mMapMaker.HasLocalMapConverged();
+            //bool test = mMapMaker.HasLocalMapConverged();
             int tracker_queue_size = mMapMaker.TrackerQueueSize();
-            ROS_WARN_STREAM("q size: " <<test_size);
+
           #endif
 
           if( (trackerEntropy[0] > ENTROPY_THRESHOLD ) || (trackerEntropy[1] > ENTROPY_THRESHOLD ) || (trackerEntropy[2] > ENTROPY_THRESHOLD) )
@@ -540,7 +542,7 @@ void Tracker::TrackFrame(ImageBWMap& imFrames, ros::Time timestamp, bool bDraw)
               #if DEBUG_CPER
               ROS_DEBUG_STREAM("MKF  buffer size: " << mMultiKeyFrameBuffer.Size());
               ROS_DEBUG("Printing 10 first elements in original buffer:");
-              mMultiKeyFrameBuffer.PrintBuffer(10);
+              mMultiKeyFrameBuffer.PrintPairBuffer(10);
               #endif 
 
               if(!mMultiKeyFrameBuffer.Empty())
@@ -555,9 +557,10 @@ void Tracker::TrackFrame(ImageBWMap& imFrames, ros::Time timestamp, bool bDraw)
               }
 
           }
+        }
       }
 	// Heuristics to check if a key-frame should be added to the map:
-    else  if (mbAddNext ||  // mMapMaker.Initializing() ||
+      else  if (mbAddNext ||  // mMapMaker.Initializing() ||
           (*gvnAddingMKFs && mOverallTrackingQuality == GOOD && mnLostFrames == 0 &&
            ros::Time::now() - mtLastMultiKeyFrameDropped > ros::Duration(0.1) &&
            mMapMaker.NeedNewMultiKeyFrame(*mpCurrentMKF)))
@@ -2020,7 +2023,7 @@ void Tracker::RecordMeasurementsAndBufferMKF()
 
             double entropyReduction = EvaluatePointEntropyReduction(this, point, kf, priorPointCovariance, pMeas->nLevel, prevPointEntropy);
 
-            if(!isnan(entropyReduction)) 
+            if(!std::isnan(entropyReduction)) 
             {
                 totalPreviousEntropy  += prevPointEntropy;
                 totalEntropyReduction += entropyReduction;
@@ -2057,7 +2060,7 @@ void Tracker::AddNewKeyFrameFromBuffer()
     
 
     #if DEBUG_CPER
-    ROS_INFO("Best Score MKF being added. Score: %f", mMultiKeyFrameBuffer.Head().first);
+    ROS_INFO("Best Score MKF being added. Score: %f", mMultiKeyFrameBuffer.Front().first);
     #endif
 
 
@@ -2087,7 +2090,7 @@ void Tracker::AddNewKeyFrameFromBuffer()
             if(std::count(mMap.mlpPoints.begin(), mMap.mlpPoints.end(), &kf_point)) //is the point still in the map?
             {       
                 #if DEBUG_CPER
-                  ROS_DEBUG("inserting keyframe " << kf.mCamName << " at point %x " <<  &kf_point);
+                  ROS_DEBUG_STREAM("inserting keyframe " << kf->mCamName << " at point %x " <<  &kf_point);
                 #endif
                 //boost::mutex::scoped_lock lock(kf->mMeasMutex);
 
@@ -2103,7 +2106,7 @@ void Tracker::AddNewKeyFrameFromBuffer()
             }
         }
 
-        for(int i=0; i<(int)ptsToDelete.size(); i++)
+        for(int i=0; i<(int)ptsToDelete.size(); ++i)
         {
             kf->EraseMeasurementOfPoint(ptsToDelete[i]);
         }
@@ -2113,7 +2116,7 @@ void Tracker::AddNewKeyFrameFromBuffer()
 
     //now we can delete the buffer
     std::size_t bufferSize = mMultiKeyFrameBuffer.Size();
-    for(std::size_t i=1; i<bufferSize; i++) // loop index starts at 1 because we don't want to delete best MKF's (first in buffer after sort)  measurements.
+    for(std::size_t i=1; i<bufferSize; ++i) // loop index starts at 1 because we don't want to delete best MKF's (first in buffer after sort)  measurements.
     {
         MultiKeyFrame *pMKF = mMultiKeyFrameBuffer.AtIndex(i).second;
         if(pMKF)
